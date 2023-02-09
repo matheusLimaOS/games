@@ -22,67 +22,59 @@ afterAll(()=>{
 })
 
 describe('testando a API', () => {
-    it("should return with status 200 , and a empty array when does not have games registereds", async ()=>{
-        const response = await api.get("/games");
+    it("should return with status 200 , and a empty array when does not have consoles registereds", async ()=>{
+        const response = await api.get("/consoles");
         expect(response.status).toBe(httpStatus.OK);
         expect(response.body).toEqual(expect.arrayContaining([]));
     })
 
-    it("should respond with status 200, and a array when have games registereds", async () => {
+    it("should respond with status 200, and a array when have consoles registereds", async () => {
+        await createConsole();
 
-        let cons = await createConsole();
-        await createGame(cons.id);
-
-        const response = await api.get("/games");
+        const response = await api.get("/consoles");
 
         expect(response.status).toBe(httpStatus.OK);
         expect(response.body).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 id: expect.any(Number),
-                title: expect.any(String),
-                consoleId: expect.any(Number)
+                name: expect.any(String),
             })
         ]));
     });
 
-    it("should return with status 200 , and a object of the founded game", async ()=>{
+    it("should return with status 200 , and a object of the founded console", async ()=>{
         let cons = await createConsole();
-        let game = await createGame(cons.id);
 
-        const response = await api.get("/games/"+game.id);
+        const response = await api.get("/consoles/"+cons.id);
 
         expect(response.status).toBe(httpStatus.OK);
         expect(response.body).toEqual(expect.objectContaining({
             id: expect.any(Number),
-            title: expect.any(String),
-            consoleId: expect.any(Number)
+            name: expect.any(String)
         }));
     })
 
-    it("should respond with status 404, when does not found the specified game", async () => {
-        const response = await api.get("/games/1");
+    it("should respond with status 404, when does not found the specified console", async () => {
+        const response = await api.get("/consoles/1");
     
         expect(response.status).toBe(httpStatus.NOT_FOUND);
     });
 
     it("should return with status 401 , when try insert a game with the same title", async ()=>{
         let cons = await createConsole();
-        let game = await createGame(cons.id);
     
-        const response = await api.post("/games/").send({
-            title:game.title,
-            consoleId: game.consoleId
+        const response = await api.post("/consoles/").send({
+            name: cons.name
         });
 
         expect(response.status).toBe(httpStatus.CONFLICT);
     })
 
-    it("should return with status 401 , when try insert a game with a consoleId not inserted", async () => {
-        const response = await api.post("/games/").send({
-            title: faker.lorem.words(2),
-            consoleId: 1
-        });
+    it("should return with status 422 , when try insert a console without a name", async ()=>{
+        let cons = await createConsole();
+    
+        const response = await api.post("/consoles/").send({});
 
-        expect(response.status).toBe(httpStatus.CONFLICT);
-    });
+        expect(response.status).toBe(httpStatus.UNPROCESSABLE_ENTITY);
+    })
 })
